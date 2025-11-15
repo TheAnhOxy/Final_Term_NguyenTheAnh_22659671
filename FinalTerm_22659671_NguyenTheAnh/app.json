@@ -15,5 +15,18 @@
     "expo-sqlite"
   ],
   "name": "FinalTerm_22659671_NguyenTheAnh",
-  "slug": "FinalTerm_22659671_NguyenTheAnh"
+  "slug": "FinalTerm_22659671_NguyenTheAnh",
+  "extra": {
+    "router": {
+      "origin": "https://n"
+    },
+    "eas": {
+      "projectId": "758d6042-f358-4079-8070-34ed013713e6"
+    }
+  },
+  "expo": {
+    "android": {
+      "package": "com.theanhoxy123.FinalTerm_22659671_NguyenTheAnh"
+    }
+  }
 }
