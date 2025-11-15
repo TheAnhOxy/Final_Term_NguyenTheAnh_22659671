@@ -71,7 +71,7 @@ export const updateHabit = async (
   );
 };
 
-// Q7: Xóa habit
+// Q7: Xóa habit for one habit
 export const deleteHabit = async (db: SQLiteDatabase, id: number) => {
   return await db.runAsync("DELETE FROM habits WHERE id = ?", [id]);
 };

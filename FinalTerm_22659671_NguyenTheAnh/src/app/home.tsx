@@ -4,8 +4,7 @@ import HabitItem from "@/components/HabitItem";
 import { useHabits } from "@/hooks/useHabits";
 import { Habit } from "@/types/habit";
 import React, { useState } from "react";
-import { FlatList, RefreshControl, View, Alert } from "react-native";
-import {IconButton} from "react-native-paper";
+import { FlatList, RefreshControl, View } from "react-native";
 import {
   ActivityIndicator,
   Button,
@@ -136,39 +135,22 @@ const HomePage = () => {
 
       {/* Q4 & Q6: Modal Thêm/Sửa */}
       <Portal>
-  <Modal
-    visible={modalVisible}
-    onDismiss={closeModal}
-    contentContainerStyle={{
-      backgroundColor: "white",
-      marginHorizontal: 20,
-      borderRadius: 10,
-      padding: 20,
-      maxHeight: "80%",
-    }}
-  >
-    {/* Header */}
-    <View className="flex-row justify-between items-center mb-4">
-      <Text variant="titleLarge">
-        {editingHabit ? "Sửa thói quen" : "Thêm thói quen"}
-      </Text>
-      <IconButton
-        icon="close"
-        iconColor="#e74c3c"
-        size={24}
-        onPress={closeModal}
-      />
-    </View>
-
-    {/* Form */}
-    <HabitForm
-      initialData={editingHabit}
-      onSave={handleSave}
-      onCancel={closeModal}
-    />
-  </Modal>
-</Portal>
-
+        <Modal
+          visible={modalVisible}
+          onDismiss={closeModal}
+          contentContainerStyle={{
+            backgroundColor: "white",
+            margin: 20,
+            borderRadius: 10,
+          }}
+        >
+          <HabitForm
+            initialData={editingHabit}
+            onSave={handleSave}
+            onCancel={closeModal}
+          />
+        </Modal>
+      </Portal>
     </View>
   );
 };
