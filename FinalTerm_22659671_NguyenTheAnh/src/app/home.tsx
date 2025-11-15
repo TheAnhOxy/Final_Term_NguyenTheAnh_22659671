@@ -16,7 +16,6 @@ import {
 } from "react-native-paper";
 
 const HomePage = () => {
-  // Custom hook
   const {
     habits,
     isLoading,
@@ -30,34 +29,24 @@ const HomePage = () => {
     handleImport,
   } = useHabits();
 
-  // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
-
-  // Filter Active state
   const [showActiveOnly, setShowActiveOnly] = useState(false);
 
   const openAddModal = () => {
     setEditingHabit(null);
     setModalVisible(true);
   };
-
   const openEditModal = (habit: Habit) => {
     setEditingHabit(habit);
     setModalVisible(true);
   };
-
-  const closeModal = () => {
-    setModalVisible(false);
-  };
+  const closeModal = () => setModalVisible(false);
 
   const handleSave = async (data: Pick<Habit, "title" | "description">) => {
     try {
-      if (editingHabit) {
-        await handleUpdateHabit(editingHabit.id, data);
-      } else {
-        await handleAddHabit(data);
-      }
+      if (editingHabit) await handleUpdateHabit(editingHabit.id, data);
+      else await handleAddHabit(data);
       closeModal();
     } catch (e) {
       Alert.alert("Error", "Failed to save habit.");
@@ -65,11 +54,11 @@ const HomePage = () => {
   };
 
   const renderEmptyState = () => (
-    <View className="flex-1 justify-center items-center p-4">
-      <Text variant="headlineSmall" className="text-center mb-4">
+    <View className="flex-1 justify-center items-center p-6">
+      <Text variant="headlineSmall" className="text-center mb-3">
         (^-^)
       </Text>
-      <Text variant="titleMedium" className="text-center">
+      <Text variant="titleMedium" className="text-center mb-1">
         Chưa có thói quen nào.
       </Text>
       <Text variant="bodyMedium" className="text-center">
@@ -78,7 +67,6 @@ const HomePage = () => {
     </View>
   );
 
-  // Lọc theo searchQuery và active
   const filteredHabits = habits.filter((habit) => {
     const matchesSearch =
       habit.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -91,24 +79,28 @@ const HomePage = () => {
   return (
     <View className="flex flex-1 bg-gray-50">
       {/* Search & Filter */}
-      <View className="px-4 py-3 bg-white shadow">
+      <View className="px-4 py-4 bg-white shadow rounded-b-lg">
         <TextInput
           mode="outlined"
           label="Tìm kiếm thói quen..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           left={<TextInput.Icon icon="magnify" />}
+          className="rounded-lg"
         />
 
-        {/* Filter Active */}
-        <View className="flex-row items-center justify-between mt-2">
-          <Text>Chỉ hiển thị thói quen đang Active</Text>
+        <View className="flex-row items-center justify-between mt-3">
+          <Text className="text-base">Chỉ hiển thị thói quen đang Active</Text>
           <Switch value={showActiveOnly} onValueChange={setShowActiveOnly} />
         </View>
 
-        {/* Import api from fetch */}
-        <Button mode="contained-tonal" onPress={handleImport} loading={isLoading}  disabled={isLoading}
-          icon="api" className="mt-2"
+        <Button
+          mode="contained-tonal"
+          onPress={handleImport}
+          loading={isLoading}
+          disabled={isLoading}
+          icon="api"
+          className="mt-3 rounded-lg"
         >
           Import Thói quen mẫu
         </Button>
@@ -126,19 +118,23 @@ const HomePage = () => {
             onDelete={handleRemoveHabit}
           />
         )}
-        ListEmptyComponent={
-          isLoading ? <ActivityIndicator /> : renderEmptyState
-        }
+        ListEmptyComponent={isLoading ? <ActivityIndicator /> : renderEmptyState}
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={refreshHabits} />
         }
-        contentContainerStyle={{ paddingBottom: 80 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
 
       {/* FAB */}
       <FAB
         icon="plus"
-        style={{ position: "absolute", margin: 16, right: 0, bottom: 0 }}
+        style={{
+          position: "absolute",
+          margin: 16,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "#3498db",
+        }}
         onPress={openAddModal}
       />
 
@@ -150,7 +146,7 @@ const HomePage = () => {
           contentContainerStyle={{
             backgroundColor: "white",
             marginHorizontal: 20,
-            borderRadius: 10,
+            borderRadius: 12,
             padding: 20,
             maxHeight: "80%",
           }}
