@@ -1,8 +1,7 @@
-// components/HabitItem.tsx
 import { Habit } from "@/types/habit";
 import React from "react";
-import { View } from "react-native";
-import { Card, Checkbox, Icon, IconButton, Text } from "react-native-paper";
+import { Pressable, View } from "react-native";
+import { Card, Checkbox, IconButton, Text } from "react-native-paper";
 
 type Props = {
   data: Habit;
@@ -16,7 +15,7 @@ const HabitItem = ({ data, onToggle, onEdit, onDelete }: Props) => {
   const isActive = data.active === 1;
 
   const cardStyle = {
-    backgroundColor: isDone ? "#e0f7ec" : "#ffffff",
+    backgroundColor: isDone ? "#e8f9f0" : "#ffffff",
     borderLeftWidth: 5,
     borderLeftColor: isDone ? "#2ecc71" : isActive ? "#3498db" : "#bdc3c7",
     elevation: 3,
@@ -24,78 +23,72 @@ const HabitItem = ({ data, onToggle, onEdit, onDelete }: Props) => {
 
   return (
     <View className="px-4 my-2">
-      <Card style={cardStyle}>
-        <View className="flex-row items-center py-2 px-3">
+      <Pressable onPress={() => onToggle(data.id)}>
+        <Card style={cardStyle}>
+          <View className="flex-row items-center py-3 px-3">
 
-          {/* Checkbox Toggle */}
-          <Checkbox
-            status={isDone ? "checked" : "unchecked"}
-            onPress={() => onToggle(data.id)}
-          />
+            {/* Checkbox Toggle */}
+            <Checkbox
+              status={isDone ? "checked" : "unchecked"}
+              onPress={() => onToggle(data.id)}
+            />
 
-          {/* Text */}
-          <View className="flex-1 ml-2">
-            <Text
-              variant="titleMedium"
-              style={{
-                fontWeight: "600",
-                textDecorationLine: isDone ? "line-through" : "none",
-              }}
-            >
-              {data.title}
-            </Text>
-
-            {data.description ? (
+            {/* Text */}
+            <View className="flex-1 ml-2">
               <Text
-                variant="bodySmall"
-                style={{ opacity: 0.7 }}
+                variant="titleMedium"
+                style={{
+                  fontWeight: "600",
+                  textDecorationLine: isDone ? "line-through" : "none",
+                  color: isDone ? "#2ecc71" : "#333",
+                }}
               >
-                {data.description}
+                {data.title}
               </Text>
-            ) : null}
 
-            {/* Active / Inactive label */}
-            <View className="mt-1">
-              {isActive ? (
+              {data.description ? (
                 <Text
-                  variant="labelSmall"
+                  variant="bodySmall"
                   style={{
-                    color: "#3498db",
-                    fontWeight: "600",
+                    opacity: 0.7,
+                    textDecorationLine: isDone ? "line-through" : "none",
                   }}
                 >
-                  • Active
+                  {data.description}
                 </Text>
-              ) : (
-                <Text
-                  variant="labelSmall"
-                  style={{
-                    color: "gray",
-                    fontWeight: "600",
-                  }}
-                >
-                  • Inactive
-                </Text>
-              )}
+              ) : null}
+
+              {/* Active / Inactive */}
+              <Text
+                variant="labelSmall"
+                style={{
+                  marginTop: 2,
+                  color: isActive ? "#3498db" : "#888",
+                  fontWeight: "600",
+                }}
+              >
+                • {isActive ? "Active" : "Inactive"}
+              </Text>
             </View>
+
+            {/* Edit button */}
+            <IconButton
+              icon="pencil-outline"
+              size={22}
+              onPress={() => onEdit(data)}
+            />
+
+            {/* Delete button */}
+            <IconButton
+              icon="trash-can-outline"
+              iconColor="#e74c3c"
+              size={22}
+              onPress={() => onDelete(data.id, data.title)}
+            />
+
           </View>
-
-          {/* Edit button */}
-          <IconButton
-            icon="pencil-outline"
-            size={22}
-            onPress={() => onEdit(data)}
-          />
-
-          {/* Delete button */}
-          <IconButton
-            icon="trash-can-outline"
-            iconColor="#e74c3c"
-            size={22}
-            onPress={() => onDelete(data.id, data.title)}
-          />
-        </View>
-      </Card>
+        </Card>
+      </Pressable>
     </View>
   );
 };
