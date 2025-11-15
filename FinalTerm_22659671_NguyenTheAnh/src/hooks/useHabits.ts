@@ -1,95 +1,147 @@
-// db/index.ts
+// hooks/useHabits.ts
+import {
+  batchImportHabits,
+  createHabit,
+  deleteHabit,
+  getAllHabits,
+  toggleHabitDone,
+  updateHabit,
+} from "@/db";
 import { Habit } from "@/types/habit";
-import { SQLiteDatabase } from "expo-sqlite";
+import { useFocusEffect } from "expo-router";
+import { useSQLiteContext } from "expo-sqlite";
+import { useCallback, useMemo, useState } from "react";
+import { Alert } from "react-native";
 
-// Q1 & Q2: Khởi tạo bảng và seed dữ liệu
-export const initDatabaseAndSeed = async (db: SQLiteDatabase) => {
-  // Tạo bảng habits
-  await db.execAsync(`
-    CREATE TABLE IF NOT EXISTS habits (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT,
-      active INTEGER DEFAULT 1,
-      done_today INTEGER DEFAULT 0,
-      created_at INTEGER
-    )
-  `);
+// Q10: Tách custom hook
+export const useHabits = () => {
+  const db = useSQLiteContext();
 
-  // Q2: Seed dữ liệu mẫu nếu bảng trống
-  const countResult = await db.getFirstAsync<{ "COUNT(*)": number }>(
-    "SELECT COUNT(*) FROM habits"
-  );
-  const count = countResult ? countResult["COUNT(*)"] : 0;
+  // State
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  if (count === 0) {
-    console.log("Seeding sample habits...");
-    await db.runAsync(
-      "INSERT INTO habits (title, description, created_at) VALUES (?, ?, ?)",
-      ["Uống 2 lít nước", "Uống đủ nước mỗi ngày", Date.now()]
-    );
-    await db.runAsync(
-      "INSERT INTO habits (title, description, created_at) VALUES (?, ?, ?)",
-      ["Đi bộ 15 phút", "Vận động sau giờ làm", Date.now()]
-    );
-  }
-};
-
-// Q3: Lấy tất cả habits (dùng trong hook)
-export const getAllHabits = async (db: SQLiteDatabase) => {
-  return await db.getAllAsync<Habit>("SELECT * FROM habits ORDER BY created_at DESC");
-};
-
-// Q4: Thêm habit mới
-export const createHabit = async (
-  db: SQLiteDatabase,
-  data: Pick<Habit, "title" | "description">
-) => {
-  return await db.runAsync(
-    "INSERT INTO habits (title, description, created_at) VALUES (?, ?, ?)",
-    [data.title, data.description || null, Date.now()]
-  );
-};
-
-// Q5: Toggle trạng thái done_today
-export const toggleHabitDone = async (db: SQLiteDatabase, id: number) => {
-  return await db.runAsync(
-    "UPDATE habits SET done_today = CASE WHEN done_today = 0 THEN 1 ELSE 0 END WHERE id = ?",
-    [id]
-  );
-};
-
-// Q6: Cập nhật habit
-export const updateHabit = async (
-  db: SQLiteDatabase,
-  id: number,
-  data: Pick<Habit, "title" | "description">
-) => {
-  return await db.runAsync(
-    "UPDATE habits SET title = ?, description = ? WHERE id = ?",
-    [data.title, data.description || null, id]
-  );
-};
-
-// Q7: Xóa habit
-export const deleteHabit = async (db: SQLiteDatabase, id: number) => {
-  return await db.runAsync("DELETE FROM habits WHERE id = ?", [id]);
-};
-
-// Q9: Import hàng loạt (sử dụng transaction để hiệu quả)
-export const batchImportHabits = async (
-  db: SQLiteDatabase,
-  habits: Pick<Habit, "title" | "description">[]
-) => {
-  await db.withTransactionAsync(async () => {
-    for (const habit of habits) {
-      // Chỉ INSERT nếu title chưa tồn tại (tránh trùng lặp)
-      await db.runAsync(
-        `INSERT INTO habits (title, description, created_at)
-         SELECT ?, ?, ?
-         WHERE NOT EXISTS (SELECT 1 FROM habits WHERE title = ?)`,
-        [habit.title, habit.description || null, Date.now(), habit.title]
-      );
+  // Hàm lấy dữ liệu (dùng useCallback)
+  const refreshHabits = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const allHabits = await getAllHabits(db);
+      setHabits(allHabits);
+    } catch (e) {
+      Alert.alert("Error", "Failed to load habits.");
+    } finally {
+      setIsLoading(false);
     }
-  });
+  }, [db]);
+
+  // Tự động load khi vào màn hình
+  useFocusEffect(
+    useCallback(() => {
+      refreshHabits();
+    }, [refreshHabits])
+  );
+
+  // Q8: Lọc client-side (dùng useMemo)
+  const filteredHabits = useMemo(() => {
+    return habits.filter((habit) =>
+      habit.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [habits, searchQuery]);
+
+  // --- Actions ---
+
+  // Q4: Thêm
+  const handleAddHabit = useCallback(
+    async (data: Pick<Habit, "title" | "description">) => {
+      await createHabit(db, data);
+      await refreshHabits();
+    },
+    [db, refreshHabits]
+  );
+
+  // Q5: Toggle
+  const handleToggleHabit = useCallback(
+    async (id: number) => {
+      await toggleHabitDone(db, id);
+      // Cập nhật state ngay lập tức để UI mượt hơn
+      setHabits((prev) =>
+        prev.map((h) =>
+          h.id === id ? { ...h, done_today: h.done_today === 0 ? 1 : 0 } : h
+        )
+      );
+      // (Không cần refresh lại từ DB)
+    },
+    [db]
+  );
+
+  // Q6: Sửa
+  const handleUpdateHabit = useCallback(
+    async (id: number, data: Pick<Habit, "title" | "description">) => {
+      await updateHabit(db, id, data);
+      await refreshHabits();
+    },
+    [db, refreshHabits]
+  );
+
+  // Q7: Xóa
+  const handleRemoveHabit = useCallback(
+    (id: number, title: string) => {
+      Alert.alert(
+        "Xác nhận xóa", // Q7: Hiện Alert xác nhận
+        `Bạn có chắc muốn xóa thói quen "${title}" không?`,
+        [
+          { text: "Hủy", style: "cancel" },
+          {
+            text: "Xóa",
+            style: "destructive",
+            onPress: async () => {
+              await deleteHabit(db, id);
+              await refreshHabits();
+            },
+          },
+        ]
+      );
+    },
+    [db, refreshHabits]
+  );
+
+  // Q9: Import
+  const handleImport = useCallback(async () => {
+    // API mẫu (thay thế bằng API thật nếu có)
+    const API_URL = "https://jsonplaceholder.typicode.com/todos";
+    try {
+      setIsLoading(true);
+      const response = await fetch(API_URL);
+      if (!response.ok) throw new Error("Failed to fetch");
+
+      const apiData = (await response.json()) as { title: string }[];
+      // Lấy 5-10 item mẫu
+      const habitsToImport = apiData.slice(0, 10).map((item) => ({
+        title: item.title, // Map trường "title"
+        description: "Imported from API",
+      }));
+
+      await batchImportHabits(db, habitsToImport);
+      await refreshHabits();
+      Alert.alert("Success", "Imported sample habits!");
+    } catch (e) {
+      Alert.alert("Error", "Failed to import habits."); // Q9: Báo lỗi
+    } finally {
+      setIsLoading(false); // Q10: Button/controls disabled
+    }
+  }, [db, refreshHabits]);
+
+  return {
+    habits: filteredHabits, // (Đã lọc)
+    isLoading,
+    searchQuery,
+    setSearchQuery,
+    refreshHabits,
+    handleAddHabit,
+    handleToggleHabit,
+    handleUpdateHabit,
+    handleRemoveHabit,
+    handleImport,
+  };
 };
