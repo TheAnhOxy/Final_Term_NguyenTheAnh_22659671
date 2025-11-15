@@ -106,14 +106,9 @@ const HomePage = () => {
           <Switch value={showActiveOnly} onValueChange={setShowActiveOnly} />
         </View>
 
-        {/* Import */}
-        <Button
-          mode="contained-tonal"
-          onPress={handleImport}
-          loading={isLoading}
-          disabled={isLoading}
-          icon="api"
-          className="mt-2"
+        {/* Import api from fetch */}
+        <Button mode="contained-tonal" onPress={handleImport} loading={isLoading}  disabled={isLoading}
+          icon="api" className="mt-2"
         >
           Import Thói quen mẫu
         </Button>
