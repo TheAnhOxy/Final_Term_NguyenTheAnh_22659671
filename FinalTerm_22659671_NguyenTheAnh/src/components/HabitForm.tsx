@@ -5,7 +5,7 @@ import { View } from "react-native";
 import { Button, HelperText, Text, TextInput } from "react-native-paper";
 
 type Props = {
-  initialData: Habit | null; // null = Thêm mới, Habit = Sửa
+  initialData: Habit | null;
   onSave: (data: Pick<Habit, "title" | "description">) => void;
   onCancel: () => void;
 };
@@ -15,13 +15,12 @@ const HabitForm = ({ initialData, onSave, onCancel }: Props) => {
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Q6: Nếu là chế độ "Sửa", fill data vào form
+
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title);
       setDescription(initialData.description || "");
     } else {
-      // Chế độ "Thêm mới", reset form
       setTitle("");
       setDescription("");
     }
@@ -29,7 +28,6 @@ const HabitForm = ({ initialData, onSave, onCancel }: Props) => {
   }, [initialData]);
 
   const handleSavePress = () => {
-    // Q4: Validate title không rỗng
     if (!title.trim()) {
       setError("Title không được rỗng");
       return;
@@ -49,7 +47,7 @@ const HabitForm = ({ initialData, onSave, onCancel }: Props) => {
         value={title}
         onChangeText={setTitle}
       />
-      {/* Q4: Hiển thị cảnh báo */}
+      {/* Q4: Hiển thị cảnh báo code test */}
       {error && <HelperText type="error">{error}</HelperText>}
 
       <TextInput

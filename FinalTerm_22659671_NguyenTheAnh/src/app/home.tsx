@@ -4,7 +4,7 @@ import HabitItem from "@/components/HabitItem";
 import { useHabits } from "@/hooks/useHabits";
 import { Habit } from "@/types/habit";
 import React, { useState } from "react";
-import { FlatList, RefreshControl, View } from "react-native";
+import { FlatList, RefreshControl, View, Alert } from "react-native";
 import {
   ActivityIndicator,
   Button,
