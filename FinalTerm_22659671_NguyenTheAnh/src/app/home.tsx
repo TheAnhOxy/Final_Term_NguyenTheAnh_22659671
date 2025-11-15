@@ -1,10 +1,9 @@
-// app/home.tsx
 import HabitForm from "@/components/HabitForm";
 import HabitItem from "@/components/HabitItem";
 import { useHabits } from "@/hooks/useHabits";
 import { Habit } from "@/types/habit";
 import React, { useState } from "react";
-import { FlatList, RefreshControl, View } from "react-native";
+import { FlatList, RefreshControl, View, Alert } from "react-native";
 import {
   ActivityIndicator,
   Button,
@@ -13,10 +12,11 @@ import {
   Portal,
   Text,
   TextInput,
+  Switch,
 } from "react-native-paper";
 
 const HomePage = () => {
-  // Q10: Lấy logic từ custom hook
+  // Custom hook
   const {
     habits,
     isLoading,
@@ -30,17 +30,18 @@ const HomePage = () => {
     handleImport,
   } = useHabits();
 
-  // State cho Modal (Câu 4, 6)
+  // Modal state
   const [modalVisible, setModalVisible] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
-  // Mở modal Thêm mới (Câu 4)
+  // Filter Active state
+  const [showActiveOnly, setShowActiveOnly] = useState(false);
+
   const openAddModal = () => {
     setEditingHabit(null);
     setModalVisible(true);
   };
 
-  // Mở modal Sửa (Câu 6)
   const openEditModal = (habit: Habit) => {
     setEditingHabit(habit);
     setModalVisible(true);
@@ -50,14 +51,11 @@ const HomePage = () => {
     setModalVisible(false);
   };
 
-  // Xử lý khi nhấn "Lưu" trên Modal
   const handleSave = async (data: Pick<Habit, "title" | "description">) => {
     try {
       if (editingHabit) {
-        // Q6: Sửa
         await handleUpdateHabit(editingHabit.id, data);
       } else {
-        // Q4: Thêm
         await handleAddHabit(data);
       }
       closeModal();
@@ -66,10 +64,8 @@ const HomePage = () => {
     }
   };
 
-  // Q3: Empty state
   const renderEmptyState = () => (
     <View className="flex-1 justify-center items-center p-4">
-      {/* Q10: Cải thiện Empty state */}
       <Text variant="headlineSmall" className="text-center mb-4">
         (^-^)
       </Text>
@@ -82,9 +78,19 @@ const HomePage = () => {
     </View>
   );
 
+  // Lọc theo searchQuery và active
+  const filteredHabits = habits.filter((habit) => {
+    const matchesSearch =
+      habit.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (habit.description &&
+        habit.description.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesActive = showActiveOnly ? habit.active === 1 : true;
+    return matchesSearch && matchesActive;
+  });
+
   return (
     <View className="flex flex-1 bg-gray-50">
-      {/* Q8: Tìm kiếm/Filter */}
+      {/* Search & Filter */}
       <View className="px-4 py-3 bg-white shadow">
         <TextInput
           mode="outlined"
@@ -93,11 +99,18 @@ const HomePage = () => {
           onChangeText={setSearchQuery}
           left={<TextInput.Icon icon="magnify" />}
         />
-        {/* Q9: Nút Import API */}
+
+        {/* Filter Active */}
+        <View className="flex-row items-center justify-between mt-2">
+          <Text>Chỉ hiển thị thói quen đang Active</Text>
+          <Switch value={showActiveOnly} onValueChange={setShowActiveOnly} />
+        </View>
+
+        {/* Import */}
         <Button
           mode="contained-tonal"
           onPress={handleImport}
-          loading={isLoading} // Q10: Disable khi loading
+          loading={isLoading}
           disabled={isLoading}
           icon="api"
           className="mt-2"
@@ -106,44 +119,54 @@ const HomePage = () => {
         </Button>
       </View>
 
-      {/* Q3: Màn hình danh sách */}
+      {/* List */}
       <FlatList
-        data={habits}
+        data={filteredHabits}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <HabitItem
             data={item}
-            onToggle={handleToggleHabit} // Q5
-            onEdit={openEditModal} // Q6
-            onDelete={handleRemoveHabit} // Q7
+            onToggle={handleToggleHabit}
+            onEdit={openEditModal}
+            onDelete={handleRemoveHabit}
           />
         )}
-        ListEmptyComponent={isLoading ? <ActivityIndicator /> : renderEmptyState}
-        // Q10: Pull to refresh
+        ListEmptyComponent={
+          isLoading ? <ActivityIndicator /> : renderEmptyState
+        }
         refreshControl={
           <RefreshControl refreshing={isLoading} onRefresh={refreshHabits} />
         }
-        contentContainerStyle={{ paddingBottom: 80 }} // Chừa chỗ cho FAB
+        contentContainerStyle={{ paddingBottom: 80 }}
       />
 
-      {/* Q4: Nút "+" mở Modal */}
+      {/* FAB */}
       <FAB
         icon="plus"
         style={{ position: "absolute", margin: 16, right: 0, bottom: 0 }}
         onPress={openAddModal}
       />
 
-      {/* Q4 & Q6: Modal Thêm/Sửa */}
+      {/* Modal */}
       <Portal>
         <Modal
           visible={modalVisible}
           onDismiss={closeModal}
           contentContainerStyle={{
             backgroundColor: "white",
-            margin: 20,
+            marginHorizontal: 20,
             borderRadius: 10,
+            padding: 20,
+            maxHeight: "80%",
           }}
         >
+          <View className="flex-row justify-between items-center mb-4">
+            <Text variant="titleLarge">
+              {editingHabit ? "Sửa thói quen" : "Thêm thói quen"}
+            </Text>
+            <FAB icon="close" small onPress={closeModal} />
+          </View>
+
           <HabitForm
             initialData={editingHabit}
             onSave={handleSave}

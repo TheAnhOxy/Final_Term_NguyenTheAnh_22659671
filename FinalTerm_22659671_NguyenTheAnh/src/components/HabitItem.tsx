@@ -26,7 +26,6 @@ const HabitItem = ({ data, onToggle, onEdit, onDelete }: Props) => {
       <Pressable onPress={() => onToggle(data.id)}>
         <Card style={cardStyle}>
           <View className="flex-row items-center py-3 px-3">
-
             {/* Checkbox Toggle */}
             <Checkbox
               status={isDone ? "checked" : "unchecked"}
@@ -85,7 +84,6 @@ const HabitItem = ({ data, onToggle, onEdit, onDelete }: Props) => {
               size={22}
               onPress={() => onDelete(data.id, data.title)}
             />
-
           </View>
         </Card>
       </Pressable>
